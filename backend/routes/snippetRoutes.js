@@ -10,7 +10,9 @@ const {
     remove,
     generateShareLink,
     shareWithUser,
-    generateSummary
+    generateSummary,
+    getTrendingTags,
+    getDashboardStats
 } = require('../controllers/snippetController');
 
 /**
@@ -35,9 +37,14 @@ const optionalAuth = (req, res, next) => {
 
 // Public routes
 router.get('/public', getPublic);
+router.get('/tags/trending', getTrendingTags);
 
 // Routes with optional auth (returns different data based on auth status)
 router.get('/', optionalAuth, getAll);
+
+// Dashboard stats (Protected)
+router.get('/dashboard-stats', verifyToken, getDashboardStats);
+
 router.get('/:id', optionalAuth, getOne);
 
 // Protected routes (require authentication)

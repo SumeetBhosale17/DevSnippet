@@ -16,11 +16,24 @@ export default function Snippets() {
   const { token } = useAuth();
   const [snippets, setSnippets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [trendingTags, setTrendingTags] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     fetchSnippets();
+    fetchTrendingTags();
   }, []);
+
+  const fetchTrendingTags = async () => {
+    try {
+      const res = await api.getTrendingTags();
+      if (res.success) {
+        setTrendingTags(res.data.tags.map(t => t.tag));
+      }
+    } catch (err) {
+      console.error("Failed to fetch trending tags:", err);
+    }
+  };
 
   const fetchSnippets = async () => {
     try {
@@ -54,14 +67,7 @@ export default function Snippets() {
     }
   };
 
-  // Trending tags derived from all snippets
-  const allTags = snippets.flatMap((s) => s.tags || []);
-  const tagCounts = {};
-  allTags.forEach((t) => (tagCounts[t] = (tagCounts[t] || 0) + 1));
-  const trendingTags = Object.entries(tagCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([tag]) => tag);
+  // Trending tags now fetched from backend API
 
   return (
     <div className="p-6 lg:p-8 max-w-[1400px] mx-auto">

@@ -130,6 +130,19 @@ export const api = {
     return res.json();
   },
 
+  // ── Stats & Trends ──
+  getDashboardStats: async (token) => {
+    const res = await fetch(`${API_URL}/snippets/dashboard-stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  getTrendingTags: async () => {
+    const res = await fetch(`${API_URL}/snippets/tags/trending`);
+    return res.json();
+  },
+
   // ── AI ──
   generateSummary: async (token, snippetId) => {
     const res = await fetch(`${API_URL}/snippets/${snippetId}/summarize`, {

@@ -290,7 +290,7 @@ export default function SnippetView() {
               <p className="text-sm text-foreground/90 leading-relaxed">{activeSummary}</p>
             </div>
           )}
-          {!editing && !activeSummary && (snippet.ai_summary || isOwner) && (
+          {!editing && !activeSummary && (snippet.ai_summary || user) && (
             <Button 
               variant="outline" 
               size="sm" 
