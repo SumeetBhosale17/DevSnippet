@@ -40,7 +40,6 @@ export default function Explore() {
   const [showFilters, setShowFilters] = useState(false);
 
   const performSearch = async (searchQuery, lang = language, tags = tagFilter) => {
-    if (!searchQuery.trim() && !lang && !tags) return;
     setLoading(true);
     setHasSearched(true);
     try {

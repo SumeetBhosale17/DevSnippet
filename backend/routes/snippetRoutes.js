@@ -6,6 +6,7 @@ const {
     getAll,
     getPublic,
     getOne,
+    update,
     remove,
     generateShareLink,
     shareWithUser,
