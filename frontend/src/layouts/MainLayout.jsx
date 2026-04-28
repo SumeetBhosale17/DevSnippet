@@ -63,7 +63,6 @@ export default function MainLayout() {
           <SidebarLink to="/" icon={LayoutDashboard} label="Dashboard" />
           <SidebarLink to="/snippets" icon={Code2} label="Snippets" />
           <SidebarLink to="/explore" icon={Compass} label="Explore" />
-          <SidebarLink to="/projects" icon={Folder} label="Projects" />
           <SidebarLink to="/analytics" icon={BarChart3} label="Analytics" />
           <SidebarLink to="/settings" icon={Settings} label="Settings" />
         </nav>

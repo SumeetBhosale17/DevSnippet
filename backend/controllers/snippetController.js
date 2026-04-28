@@ -397,8 +397,12 @@ const generateSummary = async (req, res) => {
         const { summarizeSnippet } = require('../services/llmService');
 
         const existing = await getSnippetById(snippetId);
-        if (!existing || existing.user_id !== userId) {
-            return res.status(403).json({ success: false, data: null, message: 'Access denied. Only the owner can summarize.' });
+        if (!existing) {
+            return res.status(404).json({ success: false, data: null, message: 'Snippet not found.' });
+        }
+        
+        if (existing.visibility !== 'public' && existing.user_id !== userId) {
+            return res.status(403).json({ success: false, data: null, message: 'Access denied. Only the owner can summarize private snippets.' });
         }
 
         // If a summary already exists in the DB, just return it without calling Gemini
@@ -420,4 +424,65 @@ const generateSummary = async (req, res) => {
     }
 };
 
-module.exports = { create, getAll, getPublic, getOne, update, remove, generateShareLink, shareWithUser, generateSummary };
+/**
+ * GET /api/snippets/tags/trending
+ * Get top tags based on usage count
+ */
+const getTrendingTags = async (req, res) => {
+    try {
+        const pool = require('../config/db');
+        const [rows] = await pool.execute(`
+            SELECT t.name, COUNT(st.snippet_id) as count
+            FROM tags t
+            JOIN snippet_tags st ON t.id = st.tag_id
+            JOIN snippets s ON s.id = st.snippet_id
+            WHERE s.visibility = 'public'
+            GROUP BY t.id
+            ORDER BY count DESC
+            LIMIT 10
+        `);
+        return res.status(200).json({ success: true, data: rows, message: 'Trending tags retrieved.' });
+    } catch (err) {
+        console.error('Trending tags error:', err);
+        return res.status(500).json({ success: false, data: null, message: 'Server error' });
+    }
+};
+
+/**
+ * GET /api/user/dashboard-stats
+ * Get dashboard metrics for the logged in user
+ */
+const getDashboardStats = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const pool = require('../config/db');
+        
+        const [snippetRows] = await pool.execute('SELECT COUNT(*) as total FROM snippets WHERE user_id = ?', [userId]);
+        const totalSnippets = snippetRows[0].total;
+
+        const [commentRows] = await pool.execute('SELECT COUNT(*) as total FROM comments WHERE user_id = ?', [userId]);
+        const totalComments = commentRows[0].total;
+
+        const [recentSnippets] = await pool.execute('SELECT id, title, language, created_at, visibility FROM snippets WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', [userId]);
+
+        const [langRows] = await pool.execute('SELECT language, COUNT(*) as count FROM snippets WHERE user_id = ? GROUP BY language', [userId]);
+        const languages = {};
+        langRows.forEach(row => { languages[row.language] = row.count; });
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                totalSnippets,
+                totalComments,
+                recentSnippets,
+                languages
+            },
+            message: 'Dashboard stats retrieved.'
+        });
+    } catch (err) {
+        console.error('Dashboard stats error:', err);
+        return res.status(500).json({ success: false, data: null, message: 'Server error' });
+    }
+};
+
+module.exports = { create, getAll, getPublic, getOne, update, remove, generateShareLink, shareWithUser, generateSummary, getTrendingTags, getDashboardStats };

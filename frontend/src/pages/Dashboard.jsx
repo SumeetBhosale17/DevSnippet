@@ -14,31 +14,20 @@ import CodeBlock from "@/components/CodeBlock";
 export default function Dashboard() {
   const [snippets, setSnippets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ total: 0, languages: {}, recentCount: 0 });
+  const [stats, setStats] = useState({ totalSnippets: 0, totalComments: 0, languages: {} });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("devsnippet_token");
-        const res = await api.getSnippets(token, 1);
+        const res = await api.getDashboardStats(token);
         if (res.success) {
-          const allSnippets = res.data.snippets;
-          setSnippets(allSnippets);
-
-          // Compute stats
-          const langMap = {};
-          allSnippets.forEach((s) => {
-            langMap[s.language] = (langMap[s.language] || 0) + 1;
-          });
-          const now = new Date();
-          const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-          const recentCount = allSnippets.filter(
-            (s) => new Date(s.created_at) >= weekAgo
-          ).length;
+          const { totalSnippets, totalComments, recentSnippets, languages } = res.data;
+          setSnippets(recentSnippets);
           setStats({
-            total: res.data.total || allSnippets.length,
-            languages: langMap,
-            recentCount,
+            totalSnippets,
+            totalComments,
+            languages
           });
         }
       } catch (err) {
@@ -82,8 +71,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           label="Total Snippets"
-          value={loading ? "—" : stats.total.toLocaleString()}
-          subtext="+12%"
+          value={loading ? "—" : stats.totalSnippets.toLocaleString()}
+          subtext=""
           subtextColor="text-emerald-400"
           icon={<TrendingUp className="w-4 h-4" />}
           chart={
@@ -123,21 +112,21 @@ export default function Dashboard() {
           }
         />
         <StatCard
-          label="Added This Week"
-          value={loading ? "—" : stats.recentCount}
-          subtext={stats.recentCount > 0 ? "Active" : "Quiet week"}
-          subtextColor={stats.recentCount > 0 ? "text-emerald-400" : "text-muted-foreground"}
+          label="Total Comments"
+          value={loading ? "—" : stats.totalComments}
+          subtext={stats.totalComments > 0 ? "Active Discussions" : "Quiet"}
+          subtextColor={stats.totalComments > 0 ? "text-emerald-400" : "text-muted-foreground"}
           icon={<Clock className="w-4 h-4" />}
           chart={
             <div className="mt-3 space-y-1.5">
               <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary rounded-full transition-all duration-700"
-                  style={{ width: `${Math.min((stats.recentCount / Math.max(stats.total, 1)) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((stats.totalComments / Math.max(stats.totalSnippets, 1)) * 100, 100)}%` }}
                 />
               </div>
               <p className="text-[10px] text-muted-foreground">
-                {stats.recentCount} of {stats.total} total
+                {stats.totalComments} total
               </p>
             </div>
           }
@@ -254,7 +243,7 @@ export default function Dashboard() {
                             style={{
                               backgroundColor: getLangColor(lang).bg,
                               width: `${Math.min(
-                                (count / (stats.total || 1)) * 100 * 3,
+                                (count / (stats.totalSnippets || 1)) * 100 * 3,
                                 100
                               )}%`,
                             }}
@@ -317,14 +306,14 @@ export default function Dashboard() {
                   <span className="text-xs text-muted-foreground">
                     Snippets Created
                   </span>
-                  <span className="font-bold text-lg">{stats.total}</span>
+                  <span className="font-bold text-lg">{stats.totalSnippets}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-muted-foreground">
-                    Added Today
+                    Total Comments
                   </span>
                   <span className="font-bold text-lg">
-                    {stats.recentCount}
+                    {stats.totalComments}
                   </span>
                 </div>
                 <div className="space-y-1.5">
@@ -332,12 +321,12 @@ export default function Dashboard() {
                     <div
                       className="h-full bg-primary rounded-full transition-all duration-700"
                       style={{
-                        width: `${Math.min((stats.total / 200) * 100, 100)}%`,
+                        width: `${Math.min((stats.totalSnippets / 200) * 100, 100)}%`,
                       }}
                     />
                   </div>
                   <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
-                    Storage: {Math.min(Math.round((stats.total / 200) * 100), 100)}% Utilized
+                    Storage: {Math.min(Math.round((stats.totalSnippets / 200) * 100), 100)}% Utilized
                   </p>
                 </div>
               </div>
